@@ -1,0 +1,58 @@
+@charset "utf-8";
+
+/*
+Firefox90以前に有効だったProton falseで使われていたタブの左右にあった
+境界線のコードをFirefox90のbrowser.cssから抽出して少し修正したコードです。
+
+使いたい場合は、↓のコードをuserChrome.cssに追加して使ってください。
+CSS_Loader.uc.js を使っている場合はこのテキストファイルの拡張子を
+txt → css に変えて chrome フォルダ内の CSS フォルダに入れて使ってください。
+*/
+
+@-moz-document url-prefix("chrome://browser/content/browser.xhtml") {
+
+/* Tab separators */
+
+.titlebar-spacer[type="pre-tabs"] {
+  border-inline-end: 1px solid currentColor;
+  opacity: 0.2;
+}
+
+.tabbrowser-tab::after,
+.tabbrowser-tab::before {
+  border-left: 1px solid currentColor;
+  margin-block: 3px 3px;
+  opacity: 0.3;
+}
+
+/* Move the ::before pseudo-element on tabs 1px to the left
+ * to avoid resizing the tab when the pseudo-element is removed again
+ * (this currently happens when a tab is dragged and dropped).
+ *
+ * Note that this doesn't perfectly solve the issue (dragged tabs
+ * may still resize very slightly) on some DPI settings with uneven
+ * scaling factors on Windows, because of bug 477157.
+ */
+.tabbrowser-tab::before {
+  margin-inline-start: -1px;
+}
+
+:root[tabsintitlebar] #toolbar-menubar[autohide=true] + #TabsToolbar .tabbrowser-tab::after,
+.tabbrowser-tab[multiselected]::after {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.tabbrowser-tab::after,
+/* Also show separators beside the selected tab when dragging it. */
+#tabbrowser-tabs[movingtab] > #tabbrowser-arrowscrollbox > .tabbrowser-tab[visuallyselected]::before {
+  content: "";
+  display: block;
+}
+
+}
+
+.tabbrowser-tab:not([pinned]) {
+    min-width: 150px !important; /* 最小値 デフォルト  76px */
+    max-width: 150px !important; /* 最大値 デフォルト 225px */
+}
