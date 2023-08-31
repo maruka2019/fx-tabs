@@ -52,7 +52,7 @@ txt → css に変えて chrome フォルダ内の CSS フォルダに入れて�
 
 }
 
-.tabbrowser-tab:not([pinned]) {
+.tabbrowser-tab[fadein]:not([pinned]) {
     min-width: 150px !important; /* 最小値 デフォルト  76px */
     max-width: 150px !important; /* 最大値 デフォルト 225px */
 }
