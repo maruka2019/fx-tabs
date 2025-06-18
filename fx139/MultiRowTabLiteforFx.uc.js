@@ -3,8 +3,8 @@
 // @namespace      Based on Alice0775's zzzz-MultiRowTab_LiteforFx48.uc.js
 // @description    多段タブもどき実験版 CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox133+
-// @version        2024/11/25 12:00
+// @compatibility  Firefox138+
+// @version        2025/04/07 12:00
 // ==/UserScript==
 "use strict";
 
@@ -28,14 +28,19 @@ if (!window.gBrowser) { return; }
                                             	    	 //  1  = ツールバーの下
                                             	    	 //  2  = サイトコンテンツの下
 
+                                            	    	 // タブバーの位置をツールバーの下に設定した上でタブバーとブックマークツールバーの位置を入れ替えたい人用
+                                            	    	 // 前提条件:「TabBar_Position」を「1」に設定する。
+    Bookmark_Toolbar_Position =             	true	,// [true] = メニューバー、ナビゲーションツールバー、ブックマークツールバー、タブバー
+                                            	    	 //  false = メニューバー、ナビゲーションツールバー、タブバー、ブックマークツールバー
+
                                             	    	 // タブの高さ UI密度
     UI_Density_Compact =                    	29   	,// デフォルト29px コンパクト
     UI_Density_Normal =                     	36   	,// デフォルト36px 通常
     UI_Density_Touch =                      	41   	,// デフォルト41px タッチ
 
                                             	    	 // タブの横幅
-    Tab_Min_Width =                         	120   	,// デフォルト76px  最小値
-    Tab_Max_Width =                         	120   	,// デフォルト225px 最大値
+    Tab_Min_Width =                         	140   	,// デフォルト76px  最小値
+    Tab_Max_Width =                         	140   	,// デフォルト225px 最大値
                                             	    	 // 指定する数値を両方同じにすると横幅が固定化します。
 
                                             	    	 // タブを閉じるボタン
@@ -99,10 +104,6 @@ if (!window.gBrowser) { return; }
     Fullscreen_Drag_Area =                  	false	,// [false] = デフォルト
                                             	    	 //  true   = フルスクリーンにした時、非表示になる左右のドラッグ領域が表示出来ます。
                                             	    	 // タイトルバーを表示している場合「.titlebar-spacer」を表示してもドラッグ領域として機能しないので何もしない様にしました。
-
-                                            	    	 // 垂直タブのタブバーにマウスオーバーで横幅を開閉
-    VerticalTabs_MouseOver_OpenClose =      	false	,// [false] しない デフォルト 垂直タブモードでサイドバーボタンを押すと横幅を広げたり狭めたりの開閉が出来ます。
-                                            	    	 //  true   する   垂直タブモードでサイドバーボタンを押してどちらを選んでもタブバーにマウスオーバーで横幅を広げたり狭めたりの開閉が出来ます。
 
     // -- Config End --
 
@@ -333,13 +334,13 @@ if (!window.gBrowser) { return; }
             box-shadow: none;
             margin-block: 0;
           }
-          .tab-label-container,
-          .tab-close-button {
+          .tab-label-container {
             height: var(--tab-min-height);
             max-height: 24px;
           }
           .tab-close-button {
-            padding-block: 0;
+            height: 20px !important;
+            padding-block: 3px !important;
           }
           &[usercontextid] > .tab-stack > .tab-background > .tab-context-line {
             margin-block-start: 1px !important;
@@ -378,7 +379,7 @@ if (!window.gBrowser) { return; }
         }}
         #nav-bar {
           &:not(.browser-titlebar) {
-            :root[tabsintitlebar] #toolbar-menubar[autohide="true"] ~ &,
+            :root[customtitlebar] #toolbar-menubar[autohide="true"] ~ &,
             :root[inFullscreen] #toolbar-menubar ~ & {
               & > .titlebar-buttonbox-container {
                 display: flex;
@@ -393,7 +394,7 @@ if (!window.gBrowser) { return; }
 
       body:has(> #navigator-toolbox:not([tabs-hidden])) {
         ${TabBar_Position == 1 ? `
-          script, toolbar:not(#TabsToolbar) {
+          script, toolbar:not(#TabsToolbar ${Bookmark_Toolbar_Position ? `` : `, #PersonalToolbar`}) {
             order: -1;
           }
         ` : TabBar_Position == 2 ? `
@@ -435,12 +436,12 @@ if (!window.gBrowser) { return; }
           width: ${Right_Drag_Area}px;
         }
         ${Maximize_Left_Drag_Area ? `
-          :root[tabsintitlebar]:not([sizemode="normal"], [inFullscreen]) &[type="pre-tabs"] {
+          :root[customtitlebar]:not([sizemode="normal"], [inFullscreen]) &[type="pre-tabs"] {
             display: flex;
           }
         ` : ``}
         ${Fullscreen_Drag_Area ? `
-          :root[tabsintitlebar][inFullscreen] & {
+          :root[customtitlebar][inFullscreen] & {
             display: flex;
           }
         ` : ``}
@@ -451,159 +452,6 @@ if (!window.gBrowser) { return; }
         }
       }
     }
-
-    ${VerticalTabs_MouseOver_OpenClose ? `
-      #sidebar-main {
-        &:has(sidebar-main:not([hidden]) > [collapsed="true"]) {
-          width: 165px;
-        }
-        &:has(sidebar-main > [collapsed="false"]) {
-          sidebar-main {
-            &[expanded] {
-              #tabbrowser-tabs[haspinnedtabs] {
-                #vertical-pinned-tabs-container-separator {
-                  display: flex;
-                }
-              }
-            }
-          }
-          &:hover {
-            sidebar-main {
-              &[expanded] {
-                #tabbrowser-arrowscrollbox {
-                  .tabbrowser-tab {
-                    .tab-close-button {
-                      padding-inline-start: 4px;
-                    }
-                  }
-                }
-              }
-              &:not([expanded]) {
-                #tabbrowser-tabs[haspinnedtabs] {
-                  #vertical-pinned-tabs-container {
-                    display: flex;
-                    flex-direction: column;
-                  }
-                }
-                .tabbrowser-tab {
-                  #vertical-pinned-tabs-container &,
-                  #tabbrowser-arrowscrollbox & {
-                    max-width: 234px;
-                    width: 234px;
-                    .tab-background {
-                      width: 226px;
-                    }
-                    &:hover .tab-close-button,
-                    .tab-close-button[selected],
-                    .tab-label-container {
-                      display: flex;
-                    }
-                  }
-                  #vertical-pinned-tabs-container & {
-                    .tab-close-button {
-                      margin-inline-end: 1px;
-                    }
-                  }
-                  #tabbrowser-arrowscrollbox & {
-                    #tabbrowser-tabs[overflow] & {
-                      @media not (-moz-overlay-scrollbars) {
-                        .tab-background {
-                          width: 218px !important;
-                        }
-                      }
-                    }
-                  }
-                  .tab-icon-image {
-                    #vertical-pinned-tabs-container & {
-                      margin-inline: 6.5px;
-                    }
-                    #tabbrowser-arrowscrollbox & {
-                      padding-inline-end: 7.5px;
-                    }
-                  }
-                }
-                [id*="tabs-newtab-button"] {
-                  width: 226px !important;
-                  .toolbarbutton-icon {
-                    margin-inline-end: 2px;
-                  }
-                  .toolbarbutton-text {
-                    display: flex !important;
-                  }
-                }
-              }
-            }
-          }
-          &:not(:hover) {
-            * {
-              font-size: 0;
-            }
-            sidebar-main {
-              width: 48px !important;
-              #tabbrowser-arrowscrollbox::part(scrollbox),
-              #vertical-pinned-tabs-container {
-                scrollbar-width: none;
-              }
-              #vertical-pinned-tabs-container-separator {
-                #tabbrowser-tabs[haspinnedtabs] & {
-                  width: 29px;
-                }
-              }
-              &[expanded] {
-                #vertical-pinned-tabs-container {
-                  .tabbrowser-tab {
-                   width: 36px;
-                  }
-                }
-                #tabbrowser-arrowscrollbox {
-                  .tabbrowser-tab {
-                     width: 49px;
-                    .tab-close-button {
-                      display: none;
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-      button > span {
-        &.button-background:has(img) {
-          width: 226px !important;
-          &:not(.labelled) {
-            & > img {
-              @media (-moz-bool-pref: "sidebar.verticalTabs") {
-                margin-inline: 5px 7px;
-              }
-              @media not (-moz-bool-pref: "sidebar.verticalTabs") {
-                margin-inline: 7px 6.5px;
-              }
-              & + label {
-                text-align: start;
-                width: 226px;
-                & > slot:after {
-                  font-size: var(--font-size-large);
-                  font-weight: var(--font-weight);
-                }
-              }
-              &[src$="synced-tabs.svg"] + label > slot:after {
-                content: "他の端末からのタブ";
-              }
-              &[src$="history.svg"] + label > slot:after {
-                content: "履歴";
-              }
-              &[src$="bookmark-hollow.svg"] + label > slot:after {
-                content: "ブックマーク";
-              }
-              &[src$="settings.svg"] + label > slot:after {
-                content: "サイドバーをカスタマイズ";
-              }
-            }
-          }
-        }
-      }
-    ` : ``}
 
     `,
     sss = Cc["@mozilla.org/content/style-sheet-service;1"].getService(Ci.nsIStyleSheetService),
@@ -627,375 +475,255 @@ if (!window.gBrowser) { return; }
       )
     }
 
-    gBrowser.tabContainer.addEventListener("dragover", function(event) { this._on_dragover(event); }, false)
-    gBrowser.tabContainer.addEventListener("drop", function(event) { this._on_drop(event); }, false)
-    gBrowser.tabContainer.on_dragover = function(event) { return false; }
-    gBrowser.tabContainer.on_drop = function(event) { return false; }
+    gBrowser.tabContainer._getDropIndex = function(event) {
+        let tabToDropAt = getTabFromEventTarget(event, false);
+        const tabPos = gBrowser.tabContainer.getIndexOfItem(tabToDropAt);
 
-    gBrowser.tabContainer._on_dragover = function(event) {
-      var effects = this.getDropEffectForTabDrag(event);
-
-      var ind = this._tabDropIndicator;
-      if (effects == "" || effects == "none") {
-        ind.hidden = true;
-        return;
-      }
-      event.preventDefault();
-      event.stopPropagation();
-
-      var arrowScrollbox = this.arrowScrollbox;
-
-      if (this.verticalMode || MultiRowTab_OnOff_and_TabBar_Rows == 0) {
-
-      // autoscroll the tab strip if we drag over the scroll
-      // buttons, even if we aren't dragging a tab, but then
-      // return to avoid drawing the drop indicator
-      var pixelsToScroll = 0;
-      if (this.overflowing) {
-        switch (event.originalTarget) {
-          case arrowScrollbox._scrollButtonUp:
-            pixelsToScroll = arrowScrollbox.scrollIncrement * -1;
-            break;
-          case arrowScrollbox._scrollButtonDown:
-            pixelsToScroll = arrowScrollbox.scrollIncrement;
-            break;
+        if (window.getComputedStyle(this).direction == "ltr") {
+            let rect = tabToDropAt.getBoundingClientRect();
+            if (event.clientX < rect.x + rect.width / 2)
+                return tabPos;
+            else 
+                return tabPos + 1;
+            
+        } else {
+            let rect = tabToDropAt.getBoundingClientRect();
+            if (event.clientX > rect.x + rect.width / 2)
+                return tabPos;
+            else
+                return tabPos + 1;
         }
-        if (pixelsToScroll) {
-          arrowScrollbox.scrollByPixels(
-            (RTL_UI ? -1 : 1) * pixelsToScroll,
-            true
-          );
+    };
+
+    // We set this to check if the listeners were added before
+    let listenersActive = false;
+
+    // This sets when to apply the fix (by default a new row starts after the 23th open tab, unless you changed the min-size of tabs)
+    gBrowser.tabContainer.addEventListener("dragstart", () => {
+        // Multiple tab select fix
+        gBrowser.visibleTabs.forEach(t => t.style.transform = "");
+
+        // Event handling
+        if (!listenersActive) {
+            gBrowser.tabContainer.getDropEffectForTabDrag = function(){};
+            gBrowser.tabContainer._getDropEffectForTabDrag = function(){};
+            gBrowser.tabContainer.on_dragover = (dragoverEvent) => performTabDragOver(dragoverEvent);
+            gBrowser.tabContainer._onDragOver = (dragoverEvent) => performTabDragOver(dragoverEvent);
+            gBrowser.tabContainer.ondrop = (dropEvent) => performTabDropEvent(dropEvent);
+            listenersActive = true;
         }
-      }
+    });
+}
 
-      let draggedTab = event.dataTransfer.mozGetDataAt(TAB_DROP_TYPE, 0);
-      if (
-        (effects == "move" || effects == "copy") &&
-        this == draggedTab.container &&
-        !draggedTab._dragData.fromTabList
-      ) {
-        ind.hidden = true;
+var lastKnownIndex = null;
+var lastGroupStart = null;
+var lastGroupEnd = null;
 
-     // if (this.#isAnimatingMoveTogetherSelectedTabs()) {
-     //   // Wait for moving selected tabs together animation to finish.
-     //   return;
-     // }
-        this._finishMoveTogetherSelectedTabs(draggedTab);
-
-        if (effects == "move") {
-          // Pinned tabs in expanded vertical mode are on a grid format and require
-          // different logic to drag and drop.
-       // if (this.#isContainerVerticalPinnedExpanded(draggedTab)) {
-       //   this.#animateExpandedPinnedTabMove(event);
-       //   return;
-       // }
-          this._animateTabMove(event);
-          return;
+/**
+ * Gets the tab from the event target.
+ * @param {*} event The event.
+ * @returns The tab if it was part of the target or its parents, otherwise null
+ */
+function getTabFromEventTarget(event, { ignoreTabSides = false } = {}) {
+    let { target } = event;
+    if (target.nodeType != Node.ELEMENT_NODE) {
+        target = target.parentElement;
+    }
+    let tab = target?.closest("tab") || target?.closest("tab-group");
+    const selectedTab = gBrowser.selectedTab;
+    if (tab && ignoreTabSides) {
+        let { width, height } = tab.getBoundingClientRect();
+        if (
+            event.screenX < tab.screenX + width * 0.25 ||
+            event.screenX > tab.screenX + width * 0.75 ||
+            ((event.screenY < tab.screenY + height * 0.25 ||
+                event.screenY > tab.screenY + height * 0.75) &&
+                gBrowser.tabContainer.verticalMode)
+        ) {
+            return selectedTab;
         }
-      }
+    }
+    if (!tab) {
+        return selectedTab;
+    }
+    return tab;
+}
 
-      this._finishAnimateTabMove();
+/**
+ * Performs the tab drag over event.
+ * @param {*} event The drag over event.
+ */
+function performTabDragOver(event) {
+    event.preventDefault();
+    event.stopPropagation();
 
-      }
+    let ind = gBrowser.tabContainer._tabDropIndicator;
 
-      if (effects == "link") {
-        let tab = this._getDragTargetTab(event, { ignoreTabSides: true });
+    let effects = orig_getDropEffectForTabDrag(event);
+    let tab;
+    if (effects == "link") {
+        tab = getTabFromEventTarget(event, true);
         if (tab) {
-          if (!this._dragTime) {
-            this._dragTime = Date.now();
-          }
-          if (Date.now() >= this._dragTime + this._dragOverDelay) {
-            this.selectedItem = tab;
-          }
-          ind.hidden = true;
-          return;
+            if (!gBrowser.tabContainer._dragTime)
+                gBrowser.tabContainer._dragTime = Date.now();
+            if (!tab.hasAttribute("pendingicon") && // annoying fix
+                Date.now() >= gBrowser.tabContainer._dragTime + gBrowser.tabContainer._dragOverDelay)
+                gBrowser.tabContainer.selectedItem = tab;
+            ind.hidden = true;
+            return;
         }
-      }
-
-      var tabRect, rect = arrowScrollbox.getBoundingClientRect();
-      var newMargin, newMarginY;
-      if (pixelsToScroll) {
-        // if we are scrolling, put the drop indicator at the edge
-        // so that it doesn't jump while scrolling
-        let scrollRect = arrowScrollbox.scrollClientRect;
-        let minMargin = this.verticalMode
-          ? scrollRect.top - rect.top
-          : scrollRect.left - rect.left;
-        let maxMargin = this.verticalMode
-          ? Math.min(minMargin + scrollRect.height, scrollRect.bottom)
-          : Math.min(minMargin + scrollRect.width, scrollRect.right);
-        if (RTL_UI) {
-          [minMargin, maxMargin] = [
-            this.clientWidth - maxMargin,
-            this.clientWidth - minMargin,
-          ];
-        }
-        newMargin = pixelsToScroll > 0 ? maxMargin : minMargin;
-      } else {
-        let newIndex = this._getDropIndex(event);
-        let children = this.allTabs;
-        if (newIndex === children.length) {
-          tabRect = this.visibleTabs.at(-1).getBoundingClientRect();
-          if (this.verticalMode) {
-            newMargin = tabRect.bottom - rect.top;
-          } else if (RTL_UI) {
-            newMargin = rect.right - tabRect.left;
-          } else {
-            newMargin = tabRect.right - rect.left;
-          }
-        } else {
-          tabRect = children[newIndex].getBoundingClientRect();
-          if (this.verticalMode) {
-            newMargin = rect.top - tabRect.bottom;
-          } else if (RTL_UI) {
-            newMargin = rect.right - tabRect.right;
-          } else {
-            newMargin = tabRect.left - rect.left;
-          }
-        }
-        newMarginY = tabRect.top - rect.top + tabRect.height / 2 - rect.height / 2;
-      }
-
-      ind.hidden = false;
-      newMargin += this.verticalMode ? ind.clientHeight : ind.clientWidth / 2;
-      if (RTL_UI) {
-        newMargin *= -1;
-      }
-      ind.style.transform = this.verticalMode
-        ? "translateY(" + Math.round(newMargin) + "px)"
-        : MultiRowTab_OnOff_and_TabBar_Rows == 0
-        ? "translateX(" + Math.round(newMargin) + "px)"
-        : "translate(" + Math.round(newMargin) + "px, " + Math.round(newMarginY) + "px)";
     }
 
-    gBrowser.tabContainer._on_drop = function(event) {
-      var dt = event.dataTransfer;
-      var dropEffect = dt.dropEffect;
-      var draggedTab;
-      let movingTabs;
-      if (dt.mozTypesAt(0)[0] == TAB_DROP_TYPE) {
-        // tab copy or move
+    if (!tab) {
+        tab = getTabFromEventTarget(event, false);
+    }
+    
+    let newIndex = gBrowser.tabContainer._getDropIndex(event);
+    if (newIndex == null)
+        return;
+
+    // Update the last known index and group position
+    lastKnownIndex = newIndex;
+    
+    if (tab.nodeName == "tab-group" && !lastGroupStart) {
+        lastGroupStart = tab.querySelector("tab:first-of-type")._tPos;
+        lastGroupEnd = tab.querySelector("tab:last-of-type")._tPos;
+    }
+
+    let tabs = document.querySelectorAll("tab");
+    let ltr = (window.getComputedStyle(gBrowser.tabContainer).direction == "ltr");
+    let rect = gBrowser.tabContainer.arrowScrollbox.getBoundingClientRect();
+    let newMarginX, newMarginY;
+    if (newIndex == tabs.length) {
+        let tabRect = tabs[newIndex - 1].getBoundingClientRect();
+        if (ltr)
+            newMarginX = tabRect.right - rect.left;
+        else
+            newMarginX = rect.right - tabRect.left;
+        newMarginY = tabRect.top + tabRect.height - rect.top - rect.height; // multirow fix
+
+        if (CSS.supports("offset-anchor", "left bottom")) // Compatibility fix for FF72+
+            newMarginY += rect.height / 2 - tabRect.height / 2;
+        
+    } else if (newIndex != null || newIndex != 0) {
+        let tabRect = tabs[newIndex].getBoundingClientRect();
+        if (ltr)
+            newMarginX = tabRect.left - rect.left;
+        else
+            newMarginX = rect.right - tabRect.right;
+        newMarginY = tabRect.top + tabRect.height - rect.top - rect.height; // multirow fix
+
+        if (CSS.supports("offset-anchor", "left bottom")) // Compatibility fix for FF72+
+            newMarginY += rect.height / 2 - tabRect.height / 2;
+    }
+
+    newMarginX += ind.clientWidth / 2;
+    if (!ltr)
+        newMarginX *= -1;
+
+    ind.hidden = false;
+
+    ind.style.transform = "translate(" + Math.round(newMarginX) + "px," + Math.round(newMarginY) + "px)"; // multirow fix
+    ind.style.marginInlineStart = (-ind.clientWidth) + "px";
+}
+
+/**
+ * Performs the tab drop event.
+ * @param {*} event The drop event.
+ */
+function performTabDropEvent(event) {
+    let newIndex;
+    let dt = event.dataTransfer;
+    let dropEffect = dt.dropEffect;
+    let draggedTab;
+    if (dt.mozTypesAt(0)[0] == TAB_DROP_TYPE) {
         draggedTab = dt.mozGetDataAt(TAB_DROP_TYPE, 0);
-        // not our drop then
         if (!draggedTab) {
-          return;
+            return;
         }
-        movingTabs = draggedTab._dragData.movingTabs;
-        draggedTab.container._finishMoveTogetherSelectedTabs(draggedTab);
-      }
-
-      this._tabDropIndicator.hidden = true;
-      event.stopPropagation();
-      if (draggedTab && dropEffect == "copy") {
-        // copy the dropped tab (wherever it's from)
-        let newIndex = this._getDropIndex(event);
-        let draggedTabCopy;
-        for (let tab of movingTabs) {
-          let newTab = gBrowser.duplicateTab(tab);
-          gBrowser.moveTabTo(newTab, newIndex++);
-          if (tab == draggedTab) {
-            draggedTabCopy = newTab;
-          }
-        }
-        if (draggedTab.container != this || event.shiftKey) {
-          this.selectedItem = draggedTabCopy;
-        }
-      } else if (draggedTab && draggedTab.container == this) {
-        let oldTranslateX = Math.round(draggedTab._dragData.translateX);
-        let oldTranslateY = Math.round(draggedTab._dragData.translateY);
-        let tabWidth = Math.round(draggedTab._dragData.tabWidth);
-        let tabHeight = Math.round(draggedTab._dragData.tabHeight);
-        let translateOffsetX = oldTranslateX % tabWidth;
-        let translateOffsetY = oldTranslateY % tabHeight;
-        let newTranslateX = oldTranslateX - translateOffsetX;
-        let newTranslateY = oldTranslateY - translateOffsetY;
-
-        // Update both translate axis for pinned vertical expanded tabs
-        if (oldTranslateX > 0 && translateOffsetX > tabWidth / 2) {
-          newTranslateX += tabWidth;
-        } else if (oldTranslateX < 0 && -translateOffsetX > tabWidth / 2) {
-          newTranslateX -= tabWidth;
-        }
-        if (oldTranslateY > 0 && translateOffsetY > tabHeight / 2) {
-          newTranslateY += tabHeight;
-        } else if (oldTranslateY < 0 && -translateOffsetY > tabHeight / 2) {
-          newTranslateY -= tabHeight;
-        }
-
-        let dropIndex;
-        if (draggedTab._dragData.fromTabList) {
-          dropIndex = this._getDropIndex(event);
-        } else {
-          dropIndex = this.verticalMode || MultiRowTab_OnOff_and_TabBar_Rows == 0
-            ? "animDropIndex" in draggedTab._dragData && draggedTab._dragData.animDropIndex
-            : this._getDropIndex(event);
-        }
-        let incrementDropIndex = true;
-        if (dropIndex && dropIndex > movingTabs[0]._tPos) {
-          dropIndex--;
-          incrementDropIndex = false;
-        }
-
-        let shouldTranslate =
-          !gReduceMotion && !("groupDropIndex" in draggedTab._dragData);
-     // if (this.#isContainerVerticalPinnedExpanded(draggedTab)) {
-     //   shouldTranslate &&=
-     //     (oldTranslateX && oldTranslateX != newTranslateX) ||
-     //     (oldTranslateY && oldTranslateY != newTranslateY);
-     // } else
-        if (this.verticalMode) {
-          shouldTranslate &&= oldTranslateY && oldTranslateY != newTranslateY;
-        } else {
-          shouldTranslate &&= oldTranslateX && oldTranslateX != newTranslateX;
-        }
-
-        if (shouldTranslate) {
-          for (let tab of movingTabs) {
-            tab.toggleAttribute("tabdrop-samewindow", true);
-            tab.style.transform = `translate(${newTranslateX}px, ${newTranslateY}px)`;
-            let postTransitionCleanup = () => {
-              tab.removeAttribute("tabdrop-samewindow");
-
-              this._finishAnimateTabMove();
-              if (dropIndex !== false) {
-                gBrowser.moveTabTo(tab, dropIndex);
-                if (incrementDropIndex) {
-                  dropIndex++;
-                }
-              }
-
-              gBrowser.syncThrobberAnimations(tab);
-            };
-            if (gReduceMotion) {
-              postTransitionCleanup();
-            } else {
-              let onTransitionEnd = transitionendEvent => {
-                if (
-                  transitionendEvent.propertyName != "transform" ||
-                  transitionendEvent.originalTarget != tab
-                ) {
-                  return;
-                }
-                tab.removeEventListener("transitionend", onTransitionEnd);
-
-                postTransitionCleanup();
-              };
-              tab.addEventListener("transitionend", onTransitionEnd);
-            }
-          }
-        } else {
-          let groupTab =
-            "groupDropIndex" in draggedTab._dragData
-              ? this.allTabs[draggedTab._dragData.groupDropIndex]
-              : null;
-          this._finishAnimateTabMove();
-          if (dropIndex !== false) {
-            for (let tab of movingTabs) {
-              gBrowser.moveTabTo(tab, dropIndex);
-              if (incrementDropIndex) {
-                dropIndex++;
-              }
-            }
-          }
-          if (groupTab) {
-            gBrowser.addTabGroup([groupTab, ...movingTabs], {
-              insertBefore: draggedTab,
-            });
-          }
-        }
-      } else if (draggedTab) {
-        // Move the tabs. To avoid multiple tab-switches in the original window,
-        // the selected tab should be adopted last.
-        const dropIndex = this._getDropIndex(event);
-        let newIndex = dropIndex;
-        let selectedTab;
-        let indexForSelectedTab;
-        for (let i = 0; i < movingTabs.length; ++i) {
-          const tab = movingTabs[i];
-          if (tab.selected) {
-            selectedTab = tab;
-            indexForSelectedTab = newIndex;
-          } else {
-            const newTab = gBrowser.adoptTab(tab, newIndex, tab == draggedTab);
-            if (newTab) {
-              ++newIndex;
-            }
-          }
-        }
-        if (selectedTab) {
-          const newTab = gBrowser.adoptTab(
-            selectedTab,
-            indexForSelectedTab,
-            selectedTab == draggedTab
-          );
-          if (newTab) {
-            ++newIndex;
-          }
-        }
-
-        // Restore tab selection
-        gBrowser.addRangeToMultiSelectedTabs(
-          gBrowser.tabs[dropIndex],
-          gBrowser.tabs[newIndex - 1]
-        );
-      } else {
-        // Pass true to disallow dropping javascript: or data: urls
-        let links;
-        try {
-          links = browserDragAndDrop.dropLinks(event, true);
-        } catch (ex) {}
-
-        if (!links || links.length === 0) {
-          return;
-        }
-
-        let inBackground = Services.prefs.getBoolPref(
-          "browser.tabs.loadInBackground"
-        );
-        if (event.shiftKey) {
-          inBackground = !inBackground;
-        }
-
-        let targetTab = this._getDragTargetTab(event, { ignoreTabSides: true });
-        let userContextId = this.selectedItem.getAttribute("usercontextid");
-        let replace = !!targetTab;
-        let newIndex = this._getDropIndex(event);
-        let urls = links.map(link => link.url);
-        let csp = browserDragAndDrop.getCsp(event);
-        let triggeringPrincipal =
-          browserDragAndDrop.getTriggeringPrincipal(event);
-
-        (async () => {
-          if (
-            urls.length >=
-            Services.prefs.getIntPref("browser.tabs.maxOpenBeforeWarn")
-          ) {
-            // Sync dialog cannot be used inside drop event handler.
-            let answer = await OpenInTabsUtils.promiseConfirmOpenInTabs(
-              urls.length,
-              window
-            );
-            if (!answer) {
-              return;
-            }
-          }
-
-          gBrowser.loadTabs(urls, {
-            inBackground,
-            replace,
-            allowThirdPartyFixup: true,
-            targetTab,
-            newIndex,
-            userContextId,
-            triggeringPrincipal,
-            csp,
-          });
-        })();
-      }
-
-      if (draggedTab) {
-        delete draggedTab._dragData;
-      }
     }
 
+    if (draggedTab && dropEffect != "copy" && draggedTab.container == gBrowser.tabContainer) {
+        newIndex = gBrowser.tabContainer._getDropIndex(event);
+
+        /* fix for moving multiple selected tabs and tab groups */
+        let selectedTabs = gBrowser.selectedTabs;
+        if (lastGroupStart) {
+            selectedTabs = [draggedTab?.closest("tab-group")];
+            if (lastKnownIndex >= lastGroupStart && lastKnownIndex <= lastGroupEnd) {
+                newIndex = lastGroupStart;
+            } else if (lastKnownIndex == lastGroupEnd + 1) {
+                newIndex = lastGroupStart + 1;
+            }
+        }
+
+        if (selectedTabs[selectedTabs.length - 1] == null){
+            newIndex = lastKnownIndex;
+        } else if (newIndex > selectedTabs[selectedTabs.length - 1]._tPos + 1)
+            newIndex--;
+        else if (newIndex >= selectedTabs[0]._tPos)
+            newIndex = -1;
+
+        if (newIndex == -1) {
+            newIndex = lastKnownIndex;
+        }
+        
+        const tabToMoveAt = gBrowser.tabContainer.getItemAtIndex(newIndex);
+        console.log("tabToMoveAt", tabToMoveAt);
+        console.log("newIndex", newIndex);
+        selectedTabs.forEach(t => gBrowser.moveTabBefore(t, tabToMoveAt));
+
+        // Restart global vars
+        lastKnownIndex = null;
+        lastGroupStart = null;
+        lastGroupEnd = null;
+    }
+}
+
+// copy of the original and overrided _getDropEffectForTabDrag method
+function orig_getDropEffectForTabDrag(event) {
+    let dt = event.dataTransfer;
+
+    let isMovingTabs = dt.mozItemCount > 0;
+    for (let i = 0; i < dt.mozItemCount; i++) {
+        // tabs are always added as the first type
+        let types = dt.mozTypesAt(0);
+        if (types[0] != TAB_DROP_TYPE) {
+            isMovingTabs = false;
+            break;
+        }
+    }
+
+    if (isMovingTabs) {
+        let sourceNode = dt.mozGetDataAt(TAB_DROP_TYPE, 0);
+        if (XULElement.isInstance(sourceNode) &&
+            sourceNode.localName == "tab" &&
+            sourceNode.ownerGlobal.isChromeWindow &&
+            sourceNode.ownerDocument.documentElement.getAttribute("windowtype") ==
+            "navigator:browser" &&
+            sourceNode.ownerGlobal.gBrowser.tabContainer == sourceNode.container) {
+            // Do not allow transfering a private tab to a non-private window
+            // and vice versa.
+            if (PrivateBrowsingUtils.isWindowPrivate(window) !=
+                PrivateBrowsingUtils.isWindowPrivate(sourceNode.ownerGlobal))
+                return "none";
+        
+
+            if (window.gMultiProcessBrowser !=
+                sourceNode.ownerGlobal.gMultiProcessBrowser)
+                return "none";
+        
+
+            if (window.gFissionBrowser != sourceNode.ownerGlobal.gFissionBrowser)
+                return "none";
+        
+
+            return dt.dropEffect == "copy" ? "copy" : "move";
+        }
+    }
+
+    if (Services.droppedLinkHandler.canDropLink(event, true)) 
+        return "link";
+
+    return "none";
 }
